@@ -110,7 +110,7 @@ def test_cli_run_ssl_byol(cli_args):
 @pytest.mark.skipif(**_MARK_REQUIRE_GPU)
 def test_cli_run_ssl_swav(cli_args):
     """Test running CLI for an example with default params."""
-    from pl_bolts.models.self_supervised.swav.swav_module import cli_main
+    from pl_bolts.models.self_supervised.swav.swav_module_cifar import cli_main
 
     cli_args = cli_args.strip().split(" ") if cli_args else []
     with mock.patch("argparse._sys.argv", ["any.py"] + cli_args):

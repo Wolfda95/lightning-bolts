@@ -1,3 +1,6 @@
+# NEW!!!!
+# fast gleich wie swav_module_cifar.py, nur für LIDC angepasst
+
 """Adapted from official swav implementation: https://github.com/facebookresearch/swav."""
 import os
 from argparse import ArgumentParser
@@ -17,6 +20,10 @@ from pl_bolts.transforms.dataset_normalizations import (
     imagenet_normalization,
     stl10_normalization,
 )
+
+# Neues zeug
+from PT_Dataset import TorchDataset # eigenes Python File (PT_Dataset.py) zum Daten laden
+from multicropdataset import MultiCropDataset # von Facebook Paper übernommen
 
 
 class SwAV(LightningModule):
@@ -351,6 +358,7 @@ class SwAV(LightningModule):
             return (Q / torch.sum(Q, dim=0, keepdim=True)).t().float()
 
     @staticmethod
+    # Parser argumente
     def add_model_specific_args(parent_parser):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
 
@@ -367,8 +375,8 @@ class SwAV(LightningModule):
         # transform params
         parser.add_argument("--gaussian_blur", action="store_true", help="add gaussian blur")
         parser.add_argument("--jitter_strength", type=float, default=1.0, help="jitter strength")
-        parser.add_argument("--dataset", type=str, default="stl10", help="stl10, cifar10")
-        parser.add_argument("--data_dir", type=str, default=".", help="path to download data")
+        parser.add_argument("--dataset", type=str, default="cifar10", help="stl10, cifar10") # Auswählen welches Datenset
+        parser.add_argument("--data_dir", type=str, default="/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/LIDC/manifest-1600709154662/LIDC-2D-jpeg-images", help="path to download data") # Wo soll er die Daten sepeichern die er runterläd
         parser.add_argument("--queue_path", type=str, default="queue", help="path for queue")
 
         parser.add_argument(
@@ -393,7 +401,7 @@ class SwAV(LightningModule):
         )
 
         # training params
-        parser.add_argument("--fast_dev_run", default=1, type=int)
+        parser.add_argument("--fast_dev_run", default=0, type=int) # Kurzer Test run (1/0)
         parser.add_argument("--num_nodes", default=1, type=int, help="number of nodes for training")
         parser.add_argument("--gpus", default=1, type=int, help="number of gpus to train on")
         parser.add_argument("--num_workers", default=8, type=int, help="num of workers per GPU")
@@ -449,110 +457,144 @@ def cli_main():
     from pl_bolts.datamodules import CIFAR10DataModule, ImagenetDataModule, STL10DataModule
     from pl_bolts.models.self_supervised.swav.transforms import SwAVEvalDataTransform, SwAVTrainDataTransform
 
+    # Info:
+    save_path = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/LIDC/manifest-1600709154662/LIDC-PreTrain"
+    model = "A"
+    versuch = "0"
+    checkpoint_dir = os.path.join(save_path, "save", "model_" + model, "versuch_" + versuch + "/")
+
+
     parser = ArgumentParser()
 
     # model args
-    parser = SwAV.add_model_specific_args(parser)
+    parser = SwAV.add_model_specific_args(parser) # ruft die Methode auf die die Parser Argumente hinzufügt (in SwAV *)
     args = parser.parse_args()
 
-    if args.dataset == "stl10":
-        dm = STL10DataModule(data_dir=args.data_dir, batch_size=args.batch_size, num_workers=args.num_workers)
+    # if args.dataset == "stl10":
+    #     dm = STL10DataModule(data_dir=args.data_dir, batch_size=args.batch_size, num_workers=args.num_workers)
+    #
+    #     dm.train_dataloader = dm.train_dataloader_mixed
+    #     dm.val_dataloader = dm.val_dataloader_mixed
+    #     args.num_samples = dm.num_unlabeled_samples
+    #
+    #     args.maxpool1 = False
+    #
+    #     normalization = stl10_normalization()
+    # elif args.dataset == "cifar10":
+    #     args.batch_size = 2
+    #     args.num_workers = 0
+    #
+    #     dm = CIFAR10DataModule(data_dir=args.data_dir, batch_size=args.batch_size, num_workers=args.num_workers) # Download Data + Dataloder for PyTorch Lightning (erstellt gleich Batches)
+    #
+    #     args.num_samples = dm.num_samples
+    #
+    #     args.maxpool1 = False
+    #     args.first_conv = False
+    #
+    #     normalization = cifar10_normalization()
+    #
+    #     # cifar10 specific params
+    #     args.size_crops = [32, 16]
+    #     args.nmb_crops = [2, 1]
+    #     args.gaussian_blur = False
+    # elif args.dataset == "imagenet":
+    #     args.maxpool1 = True
+    #     args.first_conv = True
+    #     normalization = imagenet_normalization()
+    #
+    #     args.size_crops = [224, 96]
+    #     args.nmb_crops = [2, 6]
+    #     args.min_scale_crops = [0.14, 0.05]
+    #     args.max_scale_crops = [1.0, 0.14]
+    #     args.gaussian_blur = True
+    #     args.jitter_strength = 1.0
+    #
+    #     args.batch_size = 64
+    #     args.num_nodes = 8
+    #     args.gpus = 8  # per-node
+    #     args.max_epochs = 800
+    #
+    #     args.optimizer = "lars"
+    #     args.learning_rate = 4.8
+    #     args.final_lr = 0.0048
+    #     args.start_lr = 0.3
+    #
+    #     args.nmb_prototypes = 3000
+    #     args.online_ft = True
+    #
+    #     dm = ImagenetDataModule(data_dir=args.data_dir, batch_size=args.batch_size, num_workers=args.num_workers)
+    #
+    #     args.num_samples = dm.num_samples
+    #     args.input_height = dm.size()[-1]
+    # else:
+    #     raise NotImplementedError("other datasets have not been implemented till now")
+    #
 
-        dm.train_dataloader = dm.train_dataloader_mixed
-        dm.val_dataloader = dm.val_dataloader_mixed
-        args.num_samples = dm.num_unlabeled_samples
+    #train_ds = TorchDataset(args.data_dir, augmentations=False)  # (PT_Dataset.py)
 
-        args.maxpool1 = False
+    train_dataset = MultiCropDataset(
+        args.data_dir,
+        args.size_crops,
+        args.nmb_crops,
+        args.min_scale_crops,
+        args.max_scale_crops,
+    )
+    #sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
 
-        normalization = stl10_normalization()
-    elif args.dataset == "cifar10":
-        args.batch_size = 2
-        args.num_workers = 0
-
-        dm = CIFAR10DataModule(data_dir=args.data_dir, batch_size=args.batch_size, num_workers=args.num_workers)
-
-        args.num_samples = dm.num_samples
-
-        args.maxpool1 = False
-        args.first_conv = False
-
-        normalization = cifar10_normalization()
-
-        # cifar10 specific params
-        args.size_crops = [32, 16]
-        args.nmb_crops = [2, 1]
-        args.gaussian_blur = False
-    elif args.dataset == "imagenet":
-        args.maxpool1 = True
-        args.first_conv = True
-        normalization = imagenet_normalization()
-
-        args.size_crops = [224, 96]
-        args.nmb_crops = [2, 6]
-        args.min_scale_crops = [0.14, 0.05]
-        args.max_scale_crops = [1.0, 0.14]
-        args.gaussian_blur = True
-        args.jitter_strength = 1.0
-
-        args.batch_size = 64
-        args.num_nodes = 8
-        args.gpus = 8  # per-node
-        args.max_epochs = 800
-
-        args.optimizer = "lars"
-        args.learning_rate = 4.8
-        args.final_lr = 0.0048
-        args.start_lr = 0.3
-
-        args.nmb_prototypes = 3000
-        args.online_ft = True
-
-        dm = ImagenetDataModule(data_dir=args.data_dir, batch_size=args.batch_size, num_workers=args.num_workers)
-
-        args.num_samples = dm.num_samples
-        args.input_height = dm.size()[-1]
-    else:
-        raise NotImplementedError("other datasets have not been implemented till now")
-
-    dm.train_transforms = SwAVTrainDataTransform(
-        normalize=normalization,
-        size_crops=args.size_crops,
-        nmb_crops=args.nmb_crops,
-        min_scale_crops=args.min_scale_crops,
-        max_scale_crops=args.max_scale_crops,
-        gaussian_blur=args.gaussian_blur,
-        jitter_strength=args.jitter_strength,
+    dm = torch.utils.data.DataLoader(  # ruft in PT_Dataset.py die __getitem Methode auf
+        train_dataset,
+        batch_size=args.batch_size,
+        #sampler=sampler,
+        shuffle=True,
+        num_workers=args.num_workers,
+        pin_memory=True,
+        drop_last=True
     )
 
-    dm.val_transforms = SwAVEvalDataTransform(
-        normalize=normalization,
-        size_crops=args.size_crops,
-        nmb_crops=args.nmb_crops,
-        min_scale_crops=args.min_scale_crops,
-        max_scale_crops=args.max_scale_crops,
-        gaussian_blur=args.gaussian_blur,
-        jitter_strength=args.jitter_strength,
-    )
+    args.num_samples = args.batch_size * len(dm)
+    print("Train Data Loader | Bs:", args.batch_size, "| len", len(dm), "| Samples:", args.batch_size * len(dm))
+
+    # dm.train_transforms = SwAVTrainDataTransform(
+    #     normalize=normalization,
+    #     size_crops=args.size_crops,
+    #     nmb_crops=args.nmb_crops,
+    #     min_scale_crops=args.min_scale_crops,
+    #     max_scale_crops=args.max_scale_crops,
+    #     gaussian_blur=args.gaussian_blur,
+    #     jitter_strength=args.jitter_strength,
+    # )
+    #
+    # dm.val_transforms = SwAVEvalDataTransform(
+    #     normalize=normalization,
+    #     size_crops=args.size_crops,
+    #     nmb_crops=args.nmb_crops,
+    #     min_scale_crops=args.min_scale_crops,
+    #     max_scale_crops=args.max_scale_crops,
+    #     gaussian_blur=args.gaussian_blur,
+    #     jitter_strength=args.jitter_strength,
+    # )
 
     # swav model init
     model = SwAV(**args.__dict__)
 
     online_evaluator = None
-    if args.online_ft:
-        # online eval
-        online_evaluator = SSLOnlineEvaluator(
-            drop_p=0.0,
-            hidden_dim=None,
-            z_dim=args.hidden_mlp,
-            num_classes=dm.num_classes,
-            dataset=args.dataset,
-        )
+    # if args.online_ft:
+    #     # online eval
+    #     online_evaluator = SSLOnlineEvaluator(
+    #         drop_p=0.0,
+    #         hidden_dim=None,
+    #         z_dim=args.hidden_mlp,
+    #         num_classes=dm.num_classes,
+    #         dataset=args.dataset,
+    #     )
 
+    # Save the model
     lr_monitor = LearningRateMonitor(logging_interval="step")
-    model_checkpoint = ModelCheckpoint(save_last=True, save_top_k=1, monitor="val_loss")
+    model_checkpoint = ModelCheckpoint(dirpath=checkpoint_dir, save_last=True, save_top_k=1, monitor="val_loss") # Festlegen wo hinspeichern ToDo.
     callbacks = [model_checkpoint, online_evaluator] if args.online_ft else [model_checkpoint]
     callbacks.append(lr_monitor)
 
+    # inizialize the model
     trainer = Trainer(
         max_epochs=args.max_epochs,
         max_steps=None if args.max_steps == -1 else args.max_steps,
@@ -565,7 +607,8 @@ def cli_main():
         fast_dev_run=args.fast_dev_run,
     )
 
-    trainer.fit(model, datamodule=dm)
+    # Train
+    trainer.fit(model, datamodule=dm) #übergibt hier auch die Dataloader sachen
 
 
 if __name__ == "__main__":

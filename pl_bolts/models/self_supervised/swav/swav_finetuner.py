@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 from pytorch_lightning import Trainer, seed_everything
 
 from pl_bolts.models.self_supervised.ssl_finetuner import SSLFineTuner
-from pl_bolts.models.self_supervised.swav.swav_module import SwAV
+from pl_bolts.models.self_supervised.swav.swav_module_cifar import SwAV
 from pl_bolts.models.self_supervised.swav.transforms import SwAVFinetuneTransform
 from pl_bolts.transforms.dataset_normalizations import imagenet_normalization, stl10_normalization
 
@@ -16,12 +16,12 @@ def cli_main():  # pragma: no cover
 
     parser = ArgumentParser()
     parser.add_argument("--dataset", type=str, help="stl10, imagenet", default="stl10")
-    parser.add_argument("--ckpt_path", type=str, help="path to ckpt")
-    parser.add_argument("--data_dir", type=str, help="path to dataset", default=os.getcwd())
+    parser.add_argument("--ckpt_path", type=str, help="path to ckpt", default = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/LIDC/manifest-1600709154662/LIDC-PreTrain/save/model_A/versuch_0/epoch=2-step=60000.ckpt")
+    parser.add_argument("--data_dir", type=str, help="path to dataset", default="/home/wolfda/Clinic_Data/Challenge/Cifar") #default=os.getcwd()
 
     parser.add_argument("--batch_size", default=64, type=int, help="batch size per gpu")
     parser.add_argument("--num_workers", default=8, type=int, help="num of workers per GPU")
-    parser.add_argument("--gpus", default=4, type=int, help="number of GPUs")
+    parser.add_argument("--gpus", default=1, type=int, help="number of GPUs")
     parser.add_argument("--num_epochs", default=100, type=int, help="number of epochs")
 
     # fine-tuner params
