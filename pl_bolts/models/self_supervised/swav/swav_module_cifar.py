@@ -201,7 +201,10 @@ class SwAV(LightningModule):
             batch = unlabeled_batch
 
         inputs, y = batch
+        #print('batch', len(batch))
+        #print("inputs, y", len(inputs), len(y))
         inputs = inputs[:-1]  # remove online train/eval transforms at this point
+        #print("nochmal inputs", len(inputs))
 
         # 1. normalize the prototypes
         with torch.no_grad():

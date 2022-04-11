@@ -1,6 +1,3 @@
-# NEW!!!!
-# Mein stadart Dataloader
-
 import os
 import random
 import re
@@ -45,7 +42,7 @@ class TorchDataset(Dataset):
 
         # Image / Lable trennen
         image = file["vol"]
-        #lable = file["class"]
+        lable = file["class"]
 
 
         # Falls nicht als float sondern als Torch Tensor abgespeichert:
@@ -70,7 +67,7 @@ class TorchDataset(Dataset):
         #print("float", image.shape)
         #print("lable", lable)
 
-        return image
+        return image, lable, name #+++++++++++++++++++++++++++++++
 
 
 

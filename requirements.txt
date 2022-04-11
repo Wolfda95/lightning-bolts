@@ -1,4 +1,11 @@
 torch>=1.7.1
 torchmetrics>=0.4.1
 pytorch-lightning>=1.4.0
-packaging
+packaging~=21.3
+
+dataclasses~=0.8
+numpy~=1.21.2
+torchvision~=0.12.0
+pillow~=9.0.1
+wandb~=0.12.11
+setuptools~=58.0.4

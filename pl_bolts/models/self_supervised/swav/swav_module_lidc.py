@@ -22,16 +22,18 @@ from pl_bolts.transforms.dataset_normalizations import (
 )
 
 # Neues zeug
-from PT_Dataset import TorchDataset # eigenes Python File (PT_Dataset.py) zum Daten laden
 from multicropdataset import MultiCropDataset # von Facebook Paper übernommen
+
+from pytorch_lightning.loggers import WandbLogger # weights and biases logger
+
 
 
 class SwAV(LightningModule):
     def __init__(
         self,
         gpus: int,
-        num_samples: int,
-        batch_size: int,
+        #num_samples: int,
+        #batch_size: int,
         dataset: str,
         num_nodes: int = 1,
         arch: str = "resnet50",
@@ -104,8 +106,8 @@ class SwAV(LightningModule):
         self.num_nodes = num_nodes
         self.arch = arch
         self.dataset = dataset
-        self.num_samples = num_samples
-        self.batch_size = batch_size
+        #self.num_samples = num_samples
+        #self.batch_size = batch_size
 
         self.hidden_mlp = hidden_mlp
         self.feat_dim = feat_dim
@@ -141,12 +143,24 @@ class SwAV(LightningModule):
 
         self.model = self.init_model()
 
-        # compute iters per epoch
-        global_batch_size = self.num_nodes * self.gpus * self.batch_size if self.gpus > 0 else self.batch_size
-        self.train_iters_per_epoch = self.num_samples // global_batch_size
+        # Mach ich später
+        # # compute iters per epoch
+        # global_batch_size = self.num_nodes * self.gpus * self.batch_size if self.gpus > 0 else self.batch_size
+        # self.train_iters_per_epoch = self.num_samples // global_batch_size
 
         self.queue = None
         self.softmax = nn.Softmax(dim=1)
+
+        # Zusatz für Dataset ------------------------------------------------------------------------------------
+        self.data_dir = kwargs["data_dir"]
+        self.size_crops = kwargs["size_crops"]
+        #self.nmb_crops = kwargs["nmb_crops"]
+        self.min_scale_crops = kwargs["min_scale_crops"]
+        self.max_scale_crops = kwargs["max_scale_crops"]
+        self.batch_size = kwargs["batch_size"]
+        self.num_workers = kwargs["num_workers"]
+
+        self.train_iters_per_epoch = 1 # einmal definieren im init(), wird dann später ausgefüllt
 
     def setup(self, stage):
         if self.queue_length > 0:
@@ -178,6 +192,41 @@ class SwAV(LightningModule):
         # pass single batch from the resnet backbone
         return self.model.forward_backbone(x)
 
+    # Zusatz für Dataset ------------------------------------------------------------------------------------
+    def prepare_data(self):
+        # Funktion von Facebook paper zum erstellen der Daten (jepg/png)
+        self.train_dataset = MultiCropDataset(
+            self.data_dir,
+            self.size_crops,
+            self.nmb_crops,
+            self.min_scale_crops,
+            self.max_scale_crops,
+        )
+
+    def train_dataloader(self):
+
+        # Pytorch DataLoader
+        train_loader = torch.utils.data.DataLoader(
+            self.train_dataset,
+            batch_size=self.batch_size,
+            #sampler=sampler,
+            shuffle=True,
+            num_workers=self.num_workers,
+            pin_memory=True,
+            drop_last=True
+        )
+
+        # Anzahl der Samples gesamt
+        self.num_samples = self.batch_size * len(train_loader)
+        print("Train Data Loader | Bs:", self.batch_size, "| len", len(train_loader), "| Samples:", self.batch_size * len(train_loader))
+
+        # compute iters per epoch
+        global_batch_size = self.num_nodes * self.gpus * self.batch_size if self.gpus > 0 else self.batch_size
+        self.train_iters_per_epoch = self.num_samples // global_batch_size
+
+        return train_loader
+    # ---------------------------------------------------------------------------------------------------------
+
     def on_train_epoch_start(self):
         if self.queue_length > 0:
             if self.trainer.current_epoch >= self.epoch_queue_starts and self.queue is None:
@@ -207,8 +256,8 @@ class SwAV(LightningModule):
             unlabeled_batch = batch[0]
             batch = unlabeled_batch
 
-        inputs, y = batch
-        inputs = inputs[:-1]  # remove online train/eval transforms at this point
+        inputs = batch
+        #inputs = inputs[:-1]  # remove online train/eval transforms at this point
 
         # 1. normalize the prototypes
         with torch.no_grad():
@@ -362,6 +411,16 @@ class SwAV(LightningModule):
     def add_model_specific_args(parent_parser):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
 
+        # Save Path
+        parser.add_argument("--save_path", default="/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/LIDC/manifest-1600709154662/LIDC-PreTrain", type=str, help="Path to save the Checkpoints")
+        parser.add_argument("--model",default="F", type=str, help="Model: A, B, C, ...")
+        parser.add_argument("--test", default="0", type=str, help="Test: 0, 1, 2 ...")
+
+        # Data Path:
+        # "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/LIDC/manifest-1600709154662/LIDC-2D-jpeg-images"
+        # "/home/wolfda/Clinic_Data/Challenge/Cifar"
+        parser.add_argument("--data_dir", type=str,default="/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/LIDC/manifest-1600709154662/LIDC-2D-jpeg-images", help="path to download data")
+
         # model params
         parser.add_argument("--arch", default="resnet50", type=str, help="convnet architecture")
         # specify flags to store false
@@ -375,8 +434,7 @@ class SwAV(LightningModule):
         # transform params
         parser.add_argument("--gaussian_blur", action="store_true", help="add gaussian blur")
         parser.add_argument("--jitter_strength", type=float, default=1.0, help="jitter strength")
-        parser.add_argument("--dataset", type=str, default="cifar10", help="stl10, cifar10") # Auswählen welches Datenset
-        parser.add_argument("--data_dir", type=str, default="/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/LIDC/manifest-1600709154662/LIDC-2D-jpeg-images", help="path to download data") # Wo soll er die Daten sepeichern die er runterläd
+        parser.add_argument("--dataset", type=str, default="cifar10", help="stl10, cifar10") # Braucht man hier nicht mehr
         parser.add_argument("--queue_path", type=str, default="queue", help="path for queue")
 
         parser.add_argument(
@@ -457,19 +515,20 @@ def cli_main():
     from pl_bolts.datamodules import CIFAR10DataModule, ImagenetDataModule, STL10DataModule
     from pl_bolts.models.self_supervised.swav.transforms import SwAVEvalDataTransform, SwAVTrainDataTransform
 
-    # Info:
-    save_path = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/LIDC/manifest-1600709154662/LIDC-PreTrain"
-    model = "A"
-    versuch = "0"
-    checkpoint_dir = os.path.join(save_path, "save", "model_" + model, "versuch_" + versuch + "/")
-
-
     parser = ArgumentParser()
 
     # model args
     parser = SwAV.add_model_specific_args(parser) # ruft die Methode auf die die Parser Argumente hinzufügt (in SwAV *)
     args = parser.parse_args()
 
+    # Path to save the Checkpoints
+    checkpoint_dir = os.path.join(args.save_path, "save", "model_" + args.model, "versuch_" + args.test + "/")
+
+    # weights and biases
+    wandb_logger = WandbLogger(name=args.model, project="swav", save_dir=args.save_path)
+
+
+    # # Lightning Data ----------------------------------------------------------------------------------------
     # if args.dataset == "stl10":
     #     dm = STL10DataModule(data_dir=args.data_dir, batch_size=args.batch_size, num_workers=args.num_workers)
     #
@@ -529,31 +588,6 @@ def cli_main():
     # else:
     #     raise NotImplementedError("other datasets have not been implemented till now")
     #
-
-    #train_ds = TorchDataset(args.data_dir, augmentations=False)  # (PT_Dataset.py)
-
-    train_dataset = MultiCropDataset(
-        args.data_dir,
-        args.size_crops,
-        args.nmb_crops,
-        args.min_scale_crops,
-        args.max_scale_crops,
-    )
-    #sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
-
-    dm = torch.utils.data.DataLoader(  # ruft in PT_Dataset.py die __getitem Methode auf
-        train_dataset,
-        batch_size=args.batch_size,
-        #sampler=sampler,
-        shuffle=True,
-        num_workers=args.num_workers,
-        pin_memory=True,
-        drop_last=True
-    )
-
-    args.num_samples = args.batch_size * len(dm)
-    print("Train Data Loader | Bs:", args.batch_size, "| len", len(dm), "| Samples:", args.batch_size * len(dm))
-
     # dm.train_transforms = SwAVTrainDataTransform(
     #     normalize=normalization,
     #     size_crops=args.size_crops,
@@ -575,7 +609,7 @@ def cli_main():
     # )
 
     # swav model init
-    model = SwAV(**args.__dict__)
+    model = SwAV(**args.__dict__) # übergibt alle args vom Parser als dict
 
     online_evaluator = None
     # if args.online_ft:
@@ -590,12 +624,13 @@ def cli_main():
 
     # Save the model
     lr_monitor = LearningRateMonitor(logging_interval="step")
-    model_checkpoint = ModelCheckpoint(dirpath=checkpoint_dir, save_last=True, save_top_k=1, monitor="val_loss") # Festlegen wo hinspeichern ToDo.
+    model_checkpoint = ModelCheckpoint(filename=os.path.join(checkpoint_dir, "{epoch}-{train_loss:.2f}"), save_last=True, save_top_k=5, monitor="train_loss") # Festlegen wo hinspeichern
     callbacks = [model_checkpoint, online_evaluator] if args.online_ft else [model_checkpoint]
     callbacks.append(lr_monitor)
 
     # inizialize the model
     trainer = Trainer(
+        logger=wandb_logger, # weights and bias logging
         max_epochs=args.max_epochs,
         max_steps=None if args.max_steps == -1 else args.max_steps,
         gpus=args.gpus,
@@ -608,7 +643,7 @@ def cli_main():
     )
 
     # Train
-    trainer.fit(model, datamodule=dm) #übergibt hier auch die Dataloader sachen
+    trainer.fit(model) # , datamodule=dm: übergibt hier auch die Dataloader sachen
 
 
 if __name__ == "__main__":
