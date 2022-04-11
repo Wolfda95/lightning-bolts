@@ -1,0 +1,1 @@
+python /home/wolfda/PycharmProjects/lightning_bolts/pl_bolts/models/self_supervised/swav/swav_module_lidc.py
