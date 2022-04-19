@@ -201,10 +201,7 @@ class SwAV(LightningModule):
             batch = unlabeled_batch
 
         inputs, y = batch
-        #print('batch', len(batch))
-        #print("inputs, y", len(inputs), len(y))
         inputs = inputs[:-1]  # remove online train/eval transforms at this point
-        #print("nochmal inputs", len(inputs))
 
         # 1. normalize the prototypes
         with torch.no_grad():
@@ -354,7 +351,6 @@ class SwAV(LightningModule):
             return (Q / torch.sum(Q, dim=0, keepdim=True)).t().float()
 
     @staticmethod
-    # Parser argumente
     def add_model_specific_args(parent_parser):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
 
@@ -371,8 +367,8 @@ class SwAV(LightningModule):
         # transform params
         parser.add_argument("--gaussian_blur", action="store_true", help="add gaussian blur")
         parser.add_argument("--jitter_strength", type=float, default=1.0, help="jitter strength")
-        parser.add_argument("--dataset", type=str, default="cifar10", help="stl10, cifar10") # Auswählen welches Datenset
-        parser.add_argument("--data_dir", type=str, default="/home/wolfda/Clinic_Data/Challenge/Cifar", help="path to download data") # Wo soll er die Daten sepeichern die er runterläd
+        parser.add_argument("--dataset", type=str, default="stl10", help="stl10, cifar10")
+        parser.add_argument("--data_dir", type=str, default="/home/wolfda/Clinic_Data/Challenge/stl10", help="path to download data")
         parser.add_argument("--queue_path", type=str, default="queue", help="path for queue")
 
         parser.add_argument(
@@ -397,7 +393,7 @@ class SwAV(LightningModule):
         )
 
         # training params
-        parser.add_argument("--fast_dev_run", default=0, type=int) # Kurzer Test run (1/0)
+        parser.add_argument("--fast_dev_run", default=0, type=int)
         parser.add_argument("--num_nodes", default=1, type=int, help="number of nodes for training")
         parser.add_argument("--gpus", default=1, type=int, help="number of gpus to train on")
         parser.add_argument("--num_workers", default=8, type=int, help="num of workers per GPU")
@@ -406,7 +402,7 @@ class SwAV(LightningModule):
         parser.add_argument("--max_epochs", default=100, type=int, help="number of total epochs to run")
         parser.add_argument("--max_steps", default=-1, type=int, help="max steps")
         parser.add_argument("--warmup_epochs", default=10, type=int, help="number of warmup epochs")
-        parser.add_argument("--batch_size", default=128, type=int, help="batch size per gpu")
+        parser.add_argument("--batch_size", default=32, type=int, help="batch size per gpu")
 
         parser.add_argument("--weight_decay", default=1e-6, type=float, help="weight decay")
         parser.add_argument("--learning_rate", default=1e-3, type=float, help="base learning rate")
@@ -453,17 +449,10 @@ def cli_main():
     from pl_bolts.datamodules import CIFAR10DataModule, ImagenetDataModule, STL10DataModule
     from pl_bolts.models.self_supervised.swav.transforms import SwAVEvalDataTransform, SwAVTrainDataTransform
 
-    # Info:
-    save_path = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/LIDC/manifest-1600709154662/LIDC-PreTrain"
-    model = "xy"
-    versuch = "0"
-    checkpoint_dir = os.path.join(save_path, "save", "model_" + model, "versuch_" + versuch + "/")
-
-
     parser = ArgumentParser()
 
     # model args
-    parser = SwAV.add_model_specific_args(parser) # ruft die Methode auf die die Parser Argumente hinzufügt (in SwAV *)
+    parser = SwAV.add_model_specific_args(parser)
     args = parser.parse_args()
 
     if args.dataset == "stl10":
@@ -480,7 +469,7 @@ def cli_main():
         args.batch_size = 2
         args.num_workers = 0
 
-        dm = CIFAR10DataModule(data_dir=args.data_dir, batch_size=args.batch_size, num_workers=args.num_workers) # Download Data + Dataloder for PyTorch Lightning (erstellt gleich Batches)
+        dm = CIFAR10DataModule(data_dir=args.data_dir, batch_size=args.batch_size, num_workers=args.num_workers)
 
         args.num_samples = dm.num_samples
 
@@ -559,13 +548,11 @@ def cli_main():
             dataset=args.dataset,
         )
 
-    # Save the model
     lr_monitor = LearningRateMonitor(logging_interval="step")
-    model_checkpoint = ModelCheckpoint(dirpath=checkpoint_dir, save_last=True, save_top_k=1, monitor="val_loss") # Festlegen wo hinspeichern ToDo.
+    model_checkpoint = ModelCheckpoint(save_last=True, save_top_k=1, monitor="val_loss")
     callbacks = [model_checkpoint, online_evaluator] if args.online_ft else [model_checkpoint]
     callbacks.append(lr_monitor)
 
-    # inizialize the model
     trainer = Trainer(
         max_epochs=args.max_epochs,
         max_steps=None if args.max_steps == -1 else args.max_steps,
@@ -578,8 +565,7 @@ def cli_main():
         fast_dev_run=args.fast_dev_run,
     )
 
-    # Train
-    trainer.fit(model, datamodule=dm) # übergibt hier auch die Dataloader sachen
+    trainer.fit(model, datamodule=dm)
 
 
 if __name__ == "__main__":
