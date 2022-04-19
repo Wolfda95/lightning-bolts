@@ -413,13 +413,13 @@ class SwAV(LightningModule):
 
         # Save Path
         parser.add_argument("--save_path", default="/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/LIDC/manifest-1600709154662/LIDC-PreTrain", type=str, help="Path to save the Checkpoints")
-        parser.add_argument("--model",default="G", type=str, help="Model: A, B, C, ...")
+        parser.add_argument("--model",default="E", type=str, help="Model: A, B, C, ...")
         parser.add_argument("--test", default="0", type=str, help="Test: 0, 1, 2 ...")
 
         # Data Path:
         # "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/LIDC/manifest-1600709154662/LIDC-2D-jpeg-images"
         # "/home/wolfda/Clinic_Data/Challenge/Cifar"
-        parser.add_argument("--data_dir", type=str,default="/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/LIDC/manifest-1600709154662/LIDC-2D-jpeg-images", help="path to download data")
+        parser.add_argument("--data_dir", default="/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/LIDC/manifest-1600709154662/LIDC-2D-jpeg-images", type=str, help="path to download data")
 
         # model params
         parser.add_argument("--arch", default="resnet50", type=str, help="convnet architecture")
@@ -465,7 +465,7 @@ class SwAV(LightningModule):
         parser.add_argument("--num_workers", default=8, type=int, help="num of workers per GPU")
         parser.add_argument("--optimizer", default="adam", type=str, help="choose between adam/lars")
         parser.add_argument("--exclude_bn_bias", action="store_true", help="exclude bn/bias from weight decay")
-        parser.add_argument("--max_epochs", default=100, type=int, help="number of total epochs to run")
+        parser.add_argument("--max_epochs", default=2000, type=int, help="number of total epochs to run")
         parser.add_argument("--max_steps", default=-1, type=int, help="max steps")
         parser.add_argument("--warmup_epochs", default=10, type=int, help="number of warmup epochs")
         parser.add_argument("--batch_size", default=128, type=int, help="batch size per gpu")
@@ -624,7 +624,7 @@ def cli_main():
 
     # Save the model
     lr_monitor = LearningRateMonitor(logging_interval="step")
-    model_checkpoint = ModelCheckpoint(filename=os.path.join(checkpoint_dir, "{epoch}-{train_loss:.2f}"), save_last=True, save_top_k=5, monitor="train_loss") # Festlegen wo hinspeichern
+    model_checkpoint = ModelCheckpoint(filename=os.path.join(checkpoint_dir, "{epoch}-{train_loss:.2f}"), save_last=True, save_top_k=50, monitor="train_loss") # Festlegen wo hinspeichern
     callbacks = [model_checkpoint, online_evaluator] if args.online_ft else [model_checkpoint]
     callbacks.append(lr_monitor)
 
