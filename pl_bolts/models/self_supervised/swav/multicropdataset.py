@@ -11,10 +11,10 @@
 import random
 from logging import getLogger
 
-from PIL import ImageFilter
 import numpy as np
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
+from PIL import Image, ImageFilter
 
 logger = getLogger()
 
@@ -39,8 +39,9 @@ class MultiCropDataset(datasets.ImageFolder):
         self.return_index = return_index
 
         color_transform = [get_color_distortion(), PILRandomGaussianBlur()]
-        mean = [0.485, 0.456, 0.406]
-        std = [0.228, 0.224, 0.225]
+        # TODO: only use grayscale images
+        mean = [0.5, 0.5, 0.5] # [0.485, 0.456, 0.406]
+        std = [0.225, 0.225, 0.225]
         trans = []
         for i in range(len(size_crops)):
             randomresizedcrop = transforms.RandomResizedCrop(
@@ -48,9 +49,10 @@ class MultiCropDataset(datasets.ImageFolder):
                 scale=(min_scale_crops[i], max_scale_crops[i]),
             )
             trans.extend([transforms.Compose([
+                # transforms.ToTensor(),
                 randomresizedcrop,
                 transforms.RandomHorizontalFlip(p=0.5),
-                transforms.Compose(color_transform),
+                # transforms.Compose(color_transform),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=mean, std=std)])
             ] * nmb_crops[i])
@@ -59,6 +61,12 @@ class MultiCropDataset(datasets.ImageFolder):
     def __getitem__(self, index):
         path, _ = self.samples[index]
         image = self.loader(path)
+        breakpoint()
+        image = np.array(image)
+        if image.max() > 1:
+            image = image  / 255
+        breakpoint()
+        image = Image.fromarray(image)
         multi_crops = list(map(lambda trans: trans(image), self.trans))
         if self.return_index:
             return index, multi_crops
