@@ -413,7 +413,7 @@ class SwAV(LightningModule):
 
         # Save Path
         parser.add_argument("--save_path", default="/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/LIDC/manifest-1600709154662/LIDC-PreTrain", type=str, help="Path to save the Checkpoints")
-        parser.add_argument("--model",default="F", type=str, help="Model: A, B, C, ...")
+        parser.add_argument("--model",default="G", type=str, help="Model: A, B, C, ...")
         parser.add_argument("--test", default="0", type=str, help="Test: 0, 1, 2 ...")
 
         # Data Path:
