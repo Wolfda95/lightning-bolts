@@ -61,12 +61,6 @@ class MultiCropDataset(datasets.ImageFolder):
     def __getitem__(self, index):
         path, _ = self.samples[index]
         image = self.loader(path)
-        breakpoint()
-        image = np.array(image)
-        if image.max() > 1:
-            image = image  / 255
-        breakpoint()
-        image = Image.fromarray(image)
         multi_crops = list(map(lambda trans: trans(image), self.trans))
         if self.return_index:
             return index, multi_crops
