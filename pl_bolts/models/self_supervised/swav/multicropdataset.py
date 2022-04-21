@@ -61,7 +61,6 @@ class MultiCropDataset(datasets.ImageFolder):
         path, _ = self.samples[index]
         image = self.loader(path)
         image = np.array(image)
-        breakpoint()
         image = image  / 255
         multi_crops = list(map(lambda trans: trans(image), self.trans))
         if self.return_index:
