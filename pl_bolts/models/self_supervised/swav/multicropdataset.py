@@ -14,7 +14,7 @@ from logging import getLogger
 import numpy as np
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
-from PIL import ImageFilter
+from PIL import Image, ImageFilter
 
 logger = getLogger()
 
@@ -49,6 +49,7 @@ class MultiCropDataset(datasets.ImageFolder):
                 scale=(min_scale_crops[i], max_scale_crops[i]),
             )
             trans.extend([transforms.Compose([
+                # transforms.ToTensor(),
                 randomresizedcrop,
                 transforms.RandomHorizontalFlip(p=0.5),
                 # transforms.Compose(color_transform),
@@ -60,8 +61,12 @@ class MultiCropDataset(datasets.ImageFolder):
     def __getitem__(self, index):
         path, _ = self.samples[index]
         image = self.loader(path)
+        breakpoint()
         image = np.array(image)
-        image = image  / 255
+        if image.max() > 1:
+            image = image  / 255
+        breakpoint()
+        image = Image.fromarray(image)
         multi_crops = list(map(lambda trans: trans(image), self.trans))
         if self.return_index:
             return index, multi_crops
