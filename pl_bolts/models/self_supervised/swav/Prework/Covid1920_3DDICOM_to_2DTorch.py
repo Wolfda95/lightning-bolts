@@ -20,7 +20,7 @@ def min_max_normalization(data, eps):
 # =============================================================================
 # ein Dict für jede Schicht von jeden Bild ()
 def save(mask, z, image):
-    save_folder = "/home/wolfda/COVID-19-20_v2/Train_tensor_slices_filter"
+    save_folder = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Challenge_COVID-19-20_v2/Train_2D_slices"
 
     # Nifti -> Numpy
     mask_new = nib.load(mask)
@@ -37,27 +37,21 @@ def save(mask, z, image):
 
     for i in range(img_new.shape[0]):
 
-        # Checken ob kein Covid in der Maske (keine weißen Pixel)
-        values, counts = np.unique(mask_new[i, ...],
-                                   return_counts=True)  # z.B [0,0,1,0,1,0] -> values=[0,1] (welche Werte kommen vor (hier: 0=schwarz, 1=weiß) counts=[4,2] (wie häufig kommen die vor))
-        if len(values) != 1 and counts[1] > (
-                0.02 * 512 * 512):  # len(values) != 1 -> values hat nur eine Spalte also keine weißen Pixel | counts[1] > (0.02 * 512 * 512) -> Mehr als 2% weiße Pixel ([1] ist die zweite Spalte mit den Anzahl an weißen Feldern)
+        # Numpy -> Torch
+        mask_t = torch.from_numpy(mask_new[i, ...])
+        mask_t = mask_t.to(torch.float16)
 
-            # Numpy -> Torch
-            mask_t = torch.from_numpy(mask_new[i, ...])
-            mask_t = mask_t.to(torch.float16)
-
-            img_t = torch.from_numpy(img_new[i, ...])
-            img_t = img_t.to(torch.float16)
-            path = save_folder + "/" + str(z) + "_" + str(i) + ".pt"  # z = Nummer des CT-Bildes, i = Nummer der Schicht
-            torch.save({"vol": img_t, "mask": mask_t, "name": image.split(".")[0]}, path)
+        img_t = torch.from_numpy(img_new[i, ...])
+        img_t = img_t.to(torch.float16)
+        path = save_folder + "/" + str(z) + "_" + str(i) + ".pt"  # z = Nummer des CT-Bildes, i = Nummer der Schicht
+        torch.save({"vol": img_t, "mask": mask_t, "Imname": image.split(".")[0].split("/")[-1], "Segname": mask.split(".")[0].split("/")[-1]}, path)
 
 
 def main():
     i = 2
     z = 0
     Ordner = sorted(glob.glob(
-        "/home/wolfda/COVID-19-20_v2/Train/volume-covid19-A-*.nii.gz"))  # Ordner: Alle Pfade aus dem Ordner Train sortiert (die Pfade unterscheiden sich nur durch *)
+        "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Challenge_COVID-19-20_v2/Train/volume-covid19-A-*.nii.gz"))  # Ordner: Alle Pfade aus dem Ordner Train sortiert (die Pfade unterscheiden sich nur durch *)
     for fileA in Ordner:  # durchläuft alle Pfade im Ordner Train
         if (i % 2) == 0:  # ct und mask kommen immer abwchselnd: bei i%2 == 0 -> immer das ct Bild
             hold = fileA  # hold = ct Bild
@@ -65,6 +59,7 @@ def main():
             save(fileA, z, hold)  # fileA = mask, hold = ct
             z = z + 1
             print(fileA.split(".")[0].split("/")[-1])
+            print(hold.split(".")[0].split("/")[-1])
         i = i + 1
 
 
