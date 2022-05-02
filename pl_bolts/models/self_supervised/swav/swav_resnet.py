@@ -200,7 +200,7 @@ class ResNet(nn.Module):
         # normalize output features
         self.l2norm = normalize
 
-        # projection head
+        # projection head: Linear Layers for Finetune ** (mit output_dim angeben wie groß output sein soll)
         if output_dim == 0:
             self.projection_head = None
         elif hidden_mlp == 0:
@@ -295,18 +295,21 @@ class ResNet(nn.Module):
 
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
+        #print("Forward Backbone", x.shape)
 
         return x
 
     def forward_head(self, x):
+        # Macht nur was wenn projection_head nicht None (nur bei finetuning)
         if self.projection_head is not None:
-            x = self.projection_head(x)
+            x = self.projection_head(x) # Linear Layers **
 
         if self.l2norm:
             x = nn.functional.normalize(x, dim=1, p=2)
 
         if self.prototypes is not None:
             return x, self.prototypes(x)
+        #print("Forward Head", x.shape)
         return x
 
     def forward(self, inputs):

@@ -413,7 +413,7 @@ class SwAV(LightningModule):
 
         # Save Path
         parser.add_argument("--save_path", default="/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/LIDC/manifest-1600709154662/LIDC-PreTrain", type=str, help="Path to save the Checkpoints")
-        parser.add_argument("--model",default="G", type=str, help="Model: A, B, C, ...")
+        parser.add_argument("--model",default="xy", type=str, help="Model: A, B, C, ...")
         parser.add_argument("--test", default="0", type=str, help="Test: 0, 1, 2 ...")
 
         # Data Path:
@@ -526,87 +526,6 @@ def cli_main():
 
     # weights and biases
     wandb_logger = WandbLogger(name=args.model, project="swav", save_dir=args.save_path)
-
-
-    # # OLD: Lightning Data ----------------------------------------------------------------------------------------
-    # if args.dataset == "stl10":
-    #     dm = STL10DataModule(data_dir=args.data_dir, batch_size=args.batch_size, num_workers=args.num_workers)
-    #
-    #     dm.train_dataloader = dm.train_dataloader_mixed
-    #     dm.val_dataloader = dm.val_dataloader_mixed
-    #     args.num_samples = dm.num_unlabeled_samples
-    #
-    #     args.maxpool1 = False
-    #
-    #     normalization = stl10_normalization()
-    # elif args.dataset == "cifar10":
-    #     args.batch_size = 2
-    #     args.num_workers = 0
-    #
-    #     dm = CIFAR10DataModule(data_dir=args.data_dir, batch_size=args.batch_size, num_workers=args.num_workers) # Download Data + Dataloder for PyTorch Lightning (erstellt gleich Batches)
-    #
-    #     args.num_samples = dm.num_samples
-    #
-    #     args.maxpool1 = False
-    #     args.first_conv = False
-    #
-    #     normalization = cifar10_normalization()
-    #
-    #     # cifar10 specific params
-    #     args.size_crops = [32, 16]
-    #     args.nmb_crops = [2, 1]
-    #     args.gaussian_blur = False
-    # elif args.dataset == "imagenet":
-    #     args.maxpool1 = True
-    #     args.first_conv = True
-    #     normalization = imagenet_normalization()
-    #
-    #     args.size_crops = [224, 96]
-    #     args.nmb_crops = [2, 6]
-    #     args.min_scale_crops = [0.14, 0.05]
-    #     args.max_scale_crops = [1.0, 0.14]
-    #     args.gaussian_blur = True
-    #     args.jitter_strength = 1.0
-    #
-    #     args.batch_size = 64
-    #     args.num_nodes = 8
-    #     args.gpus = 8  # per-node
-    #     args.max_epochs = 800
-    #
-    #     args.optimizer = "lars"
-    #     args.learning_rate = 4.8
-    #     args.final_lr = 0.0048
-    #     args.start_lr = 0.3
-    #
-    #     args.nmb_prototypes = 3000
-    #     args.online_ft = True
-    #
-    #     dm = ImagenetDataModule(data_dir=args.data_dir, batch_size=args.batch_size, num_workers=args.num_workers)
-    #
-    #     args.num_samples = dm.num_samples
-    #     args.input_height = dm.size()[-1]
-    # else:
-    #     raise NotImplementedError("other datasets have not been implemented till now")
-    #
-    # dm.train_transforms = SwAVTrainDataTransform(
-    #     normalize=normalization,
-    #     size_crops=args.size_crops,
-    #     nmb_crops=args.nmb_crops,
-    #     min_scale_crops=args.min_scale_crops,
-    #     max_scale_crops=args.max_scale_crops,
-    #     gaussian_blur=args.gaussian_blur,
-    #     jitter_strength=args.jitter_strength,
-    # )
-    #
-    # dm.val_transforms = SwAVEvalDataTransform(
-    #     normalize=normalization,
-    #     size_crops=args.size_crops,
-    #     nmb_crops=args.nmb_crops,
-    #     min_scale_crops=args.min_scale_crops,
-    #     max_scale_crops=args.max_scale_crops,
-    #     gaussian_blur=args.gaussian_blur,
-    #     jitter_strength=args.jitter_strength,
-    # )
 
     # swav model init
     model = SwAV(**args.__dict__) # übergibt alle args vom Parser als dict
