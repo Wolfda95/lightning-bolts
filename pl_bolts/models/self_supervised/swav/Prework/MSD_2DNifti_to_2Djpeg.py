@@ -45,7 +45,7 @@ def save(image, save_path, task_name, patient_name, i, wl, ww):
     # Nfti -> Numpy
     patient_pixels = nib.load(image)
     patient_pixels = patient_pixels.get_fdata()
-    patient_pixels = patient_pixels.transpose(2, 0, 1)
+    patient_pixels = patient_pixels.transpose(2, 1, 0)
 
     # CT Skalierung
     patient_pixels = win_scale(patient_pixels, wl, ww, type(patient_pixels), [patient_pixels.min(), patient_pixels.max()])  # Numpy Array Korrigiert
@@ -53,15 +53,20 @@ def save(image, save_path, task_name, patient_name, i, wl, ww):
     # Resize [48,800,800]
     #patient_pixels = scipy.ndimage.zoom(patient_pixels, (min(1, (48 / patient_pixels.shape[0])), (800 / patient_pixels.shape[1]), (800 / patient_pixels.shape[2])),mode="nearest", grid_mode=True)
 
-    # Normalization for jpeg/png
-    patient_pixels = interval_mapping(patient_pixels, patient_pixels.min(), patient_pixels.max(), 0, 255)
-    patient_pixels = patient_pixels.astype(np.uint8)
-    patient_pixels.astype(np.uint8)
+    for i in range(patient_pixels.shape[0]):
+        # 3D -> 2D
+        img = patient_pixels[i, :, :]
 
-    # Save
-    path = save_path + "/" + str(task_name) + "_" + str(patient_name) + "_" + str(i) + ".jpeg"
-    cv2.imwrite(path, patient_pixels)
+        # Normalization for jpeg/png
+        img = interval_mapping(img, img.min(), img.max(), 0, 255)
+        img = img.astype(np.uint8)
+        img.astype(np.uint8)
 
+        # Save
+        path = save_path + "/" + str(patient_name) + "_" + str(i) + ".jpeg"
+        cv2.imwrite(path, img)
+
+    print(i)
 
 # =============================================================================
 # Main
@@ -72,7 +77,7 @@ def main():
 
 
     # ToDo: Pfade wo die Daten gespeichert sind:
-    data_path = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Medical_Dcathlon/CT/Nifti_Data"
+    data_path = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Medical_Dcathlon/CT/Scheisse"
 
     # ToDo: Pfad wo die PyThorch Files gespeichert werden sollen
     save_path = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Medical_Dcathlon/CT/Jpeg_Data" # Mus vorher angelegt werden!!!!!!!
@@ -92,27 +97,29 @@ def main():
     for fileA in Ordner:  # durchläuft alle Pfade im Ordner Nifti_Data (alle Tasks)
         task_name = fileA.split("/")[-1]  # Name des Taks (Task03-Liver,...)
 
-        if task_name == "Task03-Liver":
+        print("Task: " + task_name)
+
+        if task_name == "Task03_Liver":
             wl = 60
             ww = 400
             print("liver")
-        if task_name == "Task06-Lung":
+        if task_name == "Task06_Lung":
             wl = -400
             ww = 1500
             print("lung")
-        if task_name == "Task07-Pancreas":
+        if task_name == "Task07_Pancreas":
             wl = 60
             ww = 400
             print("pancreas")
-        if task_name == "Task08-HepaticVessel":
+        if task_name == "Task08_HepaticVessel":
             wl = 40
             ww = 400
             print("HepaticVessel")
-        if task_name == "Task09-Spleen":
+        if task_name == "Task09_Spleen":
             wl = 60
             ww = 400
             print("Spleen")
-        if task_name == "Task10-Colon":
+        if task_name == "Task10_Colon":
             wl = 60
             ww = 400
             print("Colon")
@@ -129,6 +136,7 @@ def main():
                     patient_name = fileC.split("/")[-1]  # File name of patient
 
                     # (Pfad der Serie (DICOM Files), Patientenname, Schicht Nummer, WL, WW)
+                    #fileC = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Medical_Dcathlon/CT/Nifti_Data/Task07_Pancreas/imagesTr/pancreas_410.nii.gz"
                     save(fileC, save_path, task_name, patient_name, i, wl, ww)
 
                     i = i+1
