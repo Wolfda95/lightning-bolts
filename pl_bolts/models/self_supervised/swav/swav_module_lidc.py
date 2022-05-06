@@ -141,6 +141,10 @@ class SwAV(LightningModule):
         else:
             self.get_assignments = self.sinkhorn
 
+        # Zusatz für Vortrainierte Gewichte Laden: ----------------------------------------------------------------
+        self.pretrained_weights = kwargs["pretrained_weights"]
+        self.load_pretrained_weights = kwargs["load_pretrained_weights"]
+
         self.model = self.init_model()
 
         # Mach ich später
@@ -159,10 +163,6 @@ class SwAV(LightningModule):
         self.max_scale_crops = kwargs["max_scale_crops"]
         self.batch_size = kwargs["batch_size"]
         self.num_workers = kwargs["num_workers"]
-
-        # Zusatz für Vortrainierte Gewichte Laden: ----------------------------------------------------------------
-        self.pretrained_weights = kwargs["pretrained_weights"]
-        self.load_pretrained_weights = kwargs["load_pretrained_weights"]
 
         self.train_iters_per_epoch = 1 # einmal definieren im init(), wird dann später ausgefüllt
 
@@ -196,14 +196,16 @@ class SwAV(LightningModule):
 
         # Gewichte Laden-----------------------------------------------------------------------------------------
         if self.load_pretrained_weights == True:
+            print("Loading pretrained weights...")
+
             state_dict = torch.load(self.pretrained_weights)
             if "state_dict" in state_dict:
                 state_dict = state_dict["state_dict"]
 
             # remove prefixe "module." or "model."
             # Checkpoints als 'model.conv1.weight' gespeichert und Netzs als 'conv1.weight' -> model. entfernen
-            state_dict = {k.replace("model.", ""): v for k, v in state_dict.items()}  # Meine Checkpoints (model)
-            # state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()} # ImageNet PreTrian von swav (module)
+            #state_dict = {k.replace("model.", ""): v for k, v in state_dict.items()}  # Meine Checkpoints (model)
+            state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()} # ImageNet PreTrian von swav (module)
             # print(state_dict.items())
 
             for k, v in backbone_net.state_dict().items():
@@ -443,21 +445,18 @@ class SwAV(LightningModule):
 
         # Save Path
         parser.add_argument("--save_path", default="/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/PreTrain_Gesamt/Results", type=str, help="Path to save the Checkpoints")
-        parser.add_argument("--model",default="Test2", type=str, help="Model: A, B, C, ...")
-        parser.add_argument("--test", default="1", type=str, help="Test: 0, 1, 2 ...")
+        parser.add_argument("--model",default="ImageNet_Load", type=str, help="Model: A, B, C, ...")
+        parser.add_argument("--test", default="3", type=str, help="Test: 0, 1, 2 ...")
+
+        # PreTrained Weights: +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        parser.add_argument("--load_pretrained_weights",default=True, type=bool, help="Should Resume from Pretrained Weights?")
+        parser.add_argument("--pretrained_weights",default="/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/ImageNet/swav_800ep_pretrain.pth.tar", type=str, help="path to pretrained weights")
 
         # Data Path:
         # "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/LIDC/manifest-1600709154662/LIDC-2D-jpeg-images"
         # "/home/wolfda/Clinic_Data/Challenge/Cifar"
         parser.add_argument("--data_dir", default="/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/PreTrain_Gesamt/Data", type=str, help="path to download data")
 
-        # PreTrained Weights: +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        parser.add_argument("--load_pretrained_weights",
-                            default=True,
-                            type=bool, help="Should Resume from Pretrained Weights?")
-        parser.add_argument("--pretrained_weights",
-                            default="/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/ImageNet/swav_800ep_pretrain.pth.tar",
-                            type=str, help="path to pretrained weights")
 
         # model params
         parser.add_argument("--arch", default="resnet50", type=str, help="convnet architecture")
