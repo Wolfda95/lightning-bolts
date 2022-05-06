@@ -160,6 +160,10 @@ class SwAV(LightningModule):
         self.batch_size = kwargs["batch_size"]
         self.num_workers = kwargs["num_workers"]
 
+        # Zusatz für Vortrainierte Gewichte Laden: ----------------------------------------------------------------
+        self.pretrained_weights = kwargs["pretrained_weights"]
+        self.load_pretrained_weights = kwargs["load_pretrained_weights"]
+
         self.train_iters_per_epoch = 1 # einmal definieren im init(), wird dann später ausgefüllt
 
     def setup(self, stage):
@@ -179,14 +183,40 @@ class SwAV(LightningModule):
         elif self.arch == "resnet50":
             backbone = resnet50
 
-        return backbone(
+        # Netz Laden: -------------------------------------------------------------------------------------------
+        # letztes Layer projection head: nn.Linear(hidden_mlp, output_dim) (PreTrain: output_dim = 128| bei FineTune = Mögl1: 128 [+eigenes MLP dran], Mögl2: 3)
+        backbone_net=  backbone(
             normalize=True,
-            hidden_mlp=self.hidden_mlp,
-            output_dim=self.feat_dim,
+            hidden_mlp=self.hidden_mlp, # Hidden Layer MLP (wenn =0 dann nimmt es nur ein einzelnes Layer)
+            output_dim=self.feat_dim, # Output size MLP
             nmb_prototypes=self.nmb_prototypes,
             first_conv=self.first_conv,
             maxpool1=self.maxpool1,
         )
+
+        # Gewichte Laden-----------------------------------------------------------------------------------------
+        if self.load_pretrained_weights == True:
+            state_dict = torch.load(self.pretrained_weights)
+            if "state_dict" in state_dict:
+                state_dict = state_dict["state_dict"]
+
+            # remove prefixe "module." or "model."
+            # Checkpoints als 'model.conv1.weight' gespeichert und Netzs als 'conv1.weight' -> model. entfernen
+            state_dict = {k.replace("model.", ""): v for k, v in state_dict.items()}  # Meine Checkpoints (model)
+            # state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()} # ImageNet PreTrian von swav (module)
+            # print(state_dict.items())
+
+            for k, v in backbone_net.state_dict().items():
+                if k not in list(state_dict):
+                    print('key "{}" could not be found in provided state dict'.format(k))
+                elif state_dict[k].shape != v.shape:
+                    print('key "{}" is of different shape in model and provided state dict'.format(k))
+                    state_dict[k] = v
+            msg = backbone_net.load_state_dict(state_dict, strict=False)
+            print("Load pretrained model with msg: {}".format(msg))
+
+
+        return backbone_net
 
     def forward(self, x):
         # pass single batch from the resnet backbone
@@ -413,13 +443,21 @@ class SwAV(LightningModule):
 
         # Save Path
         parser.add_argument("--save_path", default="/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/PreTrain_Gesamt/Results", type=str, help="Path to save the Checkpoints")
-        parser.add_argument("--model",default="A", type=str, help="Model: A, B, C, ...")
-        parser.add_argument("--test", default="0", type=str, help="Test: 0, 1, 2 ...")
+        parser.add_argument("--model",default="Test2", type=str, help="Model: A, B, C, ...")
+        parser.add_argument("--test", default="1", type=str, help="Test: 0, 1, 2 ...")
 
         # Data Path:
         # "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/LIDC/manifest-1600709154662/LIDC-2D-jpeg-images"
         # "/home/wolfda/Clinic_Data/Challenge/Cifar"
-        parser.add_argument("--data_dir", default="/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/PreTrain_Gesamt/Data/LIDC-MSD", type=str, help="path to download data")
+        parser.add_argument("--data_dir", default="/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/PreTrain_Gesamt/Data", type=str, help="path to download data")
+
+        # PreTrained Weights: +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        parser.add_argument("--load_pretrained_weights",
+                            default=True,
+                            type=bool, help="Should Resume from Pretrained Weights?")
+        parser.add_argument("--pretrained_weights",
+                            default="/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/ImageNet/swav_800ep_pretrain.pth.tar",
+                            type=str, help="path to pretrained weights")
 
         # model params
         parser.add_argument("--arch", default="resnet50", type=str, help="convnet architecture")
@@ -525,7 +563,7 @@ def cli_main():
     checkpoint_dir = os.path.join(args.save_path, "save", "model_" + args.model, "versuch_" + args.test + "/")
 
     # weights and biases
-    wandb_logger = WandbLogger(name=args.model, project="swav_LIDC_MSD", save_dir=args.save_path)
+    wandb_logger = WandbLogger(name=args.model, project="Test", save_dir=args.save_path)
 
     # swav model init
     model = SwAV(**args.__dict__) # übergibt alle args vom Parser als dict
@@ -562,7 +600,7 @@ def cli_main():
     )
 
     # Train
-    trainer.fit(model) # , datamodule=dm: übergibt hier auch die Dataloader sachen
+    trainer.fit(model)
 
 
 if __name__ == "__main__":

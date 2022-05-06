@@ -200,12 +200,21 @@ class ResNet(nn.Module):
         # normalize output features
         self.l2norm = normalize
 
-        # projection head: Linear Layers for Finetune ** (mit output_dim angeben wie groß output sein soll)
+        # projection head: Linear Layers (mit output_dim angeben wie groß output sein soll) ***********************************************************
+        # PreTrain:
+        # output_dim = 128
+        # hidden_mlp = 2048
+        # Finetune
+        # output_dim = Mögl2: 3 ** | Mögl1: 128 ***
+        # hidden_mlp == Mögl2: 0 ** | Mögl1: 2048 ***
         if output_dim == 0:
             self.projection_head = None
         elif hidden_mlp == 0:
+            # Finetune Mögl2 ** (nur ein Linear Lyer statt dem vortrainierten MLP)
             self.projection_head = nn.Linear(num_out_filters * block.expansion, output_dim)
         else:
+            # PreTrain
+            # Finetune Mögl1 *** (nimmt das vortrainierte MLP und muss dann selber noch ein MLP anhängen um von 128 auf Anzahl Klassen zu kommen)
             self.projection_head = nn.Sequential(
                 nn.Linear(num_out_filters * block.expansion, hidden_mlp),
                 nn.BatchNorm1d(hidden_mlp),
@@ -213,7 +222,9 @@ class ResNet(nn.Module):
                 nn.Linear(hidden_mlp, output_dim),
             )
 
-        # prototype layer
+        # prototype layer [Clustering] (Nur bei PreTrain)
+        # nmb_prototypes = 3000 bei PreTrain
+        # nmb_prototypes = 0 bei Finetune
         self.prototypes = None
         if isinstance(nmb_prototypes, list):
             self.prototypes = MultiPrototypes(output_dim, nmb_prototypes)
@@ -309,7 +320,7 @@ class ResNet(nn.Module):
 
         if self.prototypes is not None:
             return x, self.prototypes(x)
-        #print("Forward Head", x.shape)
+
         return x
 
     def forward(self, inputs):
