@@ -201,12 +201,15 @@ class ResNet(nn.Module):
         self.l2norm = normalize
 
         # projection head: Linear Layers (mit output_dim angeben wie groß output sein soll) ***********************************************************
+
         # PreTrain:
         # output_dim = 128
         # hidden_mlp = 2048
+
         # Finetune
         # output_dim = Mögl2: 3 ** | Mögl1: 128 ***
         # hidden_mlp == Mögl2: 0 ** | Mögl1: 2048 ***
+
         if output_dim == 0:
             self.projection_head = None
         elif hidden_mlp == 0:

@@ -142,8 +142,9 @@ class SwAV(LightningModule):
             self.get_assignments = self.sinkhorn
 
         # Zusatz für Vortrainierte Gewichte Laden: ----------------------------------------------------------------
-        self.pretrained_weights = kwargs["pretrained_weights"]
         self.load_pretrained_weights = kwargs["load_pretrained_weights"]
+        if self.load_pretrained_weights == True:
+            self.pretrained_weights = kwargs["pretrained_weights"]
 
         self.model = self.init_model()
 
@@ -445,8 +446,8 @@ class SwAV(LightningModule):
 
         # Save Path
         parser.add_argument("--save_path", default="/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/PreTrain_Gesamt/Results", type=str, help="Path to save the Checkpoints")
-        parser.add_argument("--model",default="ImageNet_Load", type=str, help="Model: A, B, C, ...")
-        parser.add_argument("--test", default="3", type=str, help="Test: 0, 1, 2 ...")
+        parser.add_argument("--model",default="ImageNet_Weights_kleine_learning_rate", type=str, help="Model: A, B, C, ...")
+        parser.add_argument("--test", default="kleine_learning_rate", type=str, help="Test: 0, 1, 2 ...")
 
         # PreTrained Weights: +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         parser.add_argument("--load_pretrained_weights",default=True, type=bool, help="Should Resume from Pretrained Weights?")
@@ -502,13 +503,13 @@ class SwAV(LightningModule):
         parser.add_argument("--num_workers", default=8, type=int, help="num of workers per GPU")
         parser.add_argument("--optimizer", default="adam", type=str, help="choose between adam/lars")
         parser.add_argument("--exclude_bn_bias", action="store_true", help="exclude bn/bias from weight decay")
-        parser.add_argument("--max_epochs", default=1000, type=int, help="number of total epochs to run")
+        parser.add_argument("--max_epochs", default=20, type=int, help="number of total epochs to run")
         parser.add_argument("--max_steps", default=-1, type=int, help="max steps")
         parser.add_argument("--warmup_epochs", default=10, type=int, help="number of warmup epochs")
         parser.add_argument("--batch_size", default=128, type=int, help="batch size per gpu")
 
         parser.add_argument("--weight_decay", default=1e-6, type=float, help="weight decay")
-        parser.add_argument("--learning_rate", default=1e-3, type=float, help="base learning rate")
+        parser.add_argument("--learning_rate", default=1e-8, type=float, help="base learning rate")
         parser.add_argument("--start_lr", default=0, type=float, help="initial warmup learning rate")
         parser.add_argument("--final_lr", type=float, default=1e-6, help="final learning rate")
 
@@ -562,7 +563,7 @@ def cli_main():
     checkpoint_dir = os.path.join(args.save_path, "save", "model_" + args.model, "versuch_" + args.test + "/")
 
     # weights and biases
-    wandb_logger = WandbLogger(name=args.model, project="Test", save_dir=args.save_path)
+    wandb_logger = WandbLogger(name=args.model, project="swav_LidcMsd_ImageNetWeights", save_dir=args.save_path)
 
     # swav model init
     model = SwAV(**args.__dict__) # übergibt alle args vom Parser als dict

@@ -2,8 +2,8 @@
 
 wandb login 2547ade8e5df6e5c103ecf11af5c1453abea046c
 python /lightning_bolts/pl_bolts/models/self_supervised/swav/swav_module_lidc.py \
---save_path /LIDC-PreTrain \
---model F \
+--save_path /LIDC_MSD-PreTrain \
+--model Test \
 --test 0 \
 --data_dir /LIDC-2D-jpeg-images
 
