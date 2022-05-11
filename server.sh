@@ -1,11 +1,13 @@
 #!/bin/bash
 
 wandb login 2547ade8e5df6e5c103ecf11af5c1453abea046c
-python /lightning_bolts/pl_bolts/models/self_supervised/swav/swav_module_lidc.py \
---save_path /LIDC_MSD-PreTrain \
---model Test \
---test 0 \
---data_dir /LIDC-2D-jpeg-images
+python ./lightning_bolts/pl_bolts/models/self_supervised/swav/swav_module_lidc.py \
+--save_path ./LIDC_MSD-PreTrain \
+--data_dir ./Data/LIDC_MSD \
+--model LIDC_MSD_lr-4 \
+--test LIDC_MSD_lr-4 \
+--learning_rate 1e-4 \
+
 
 # Lokal:
 # python /home/wolfda/PycharmProjects/lightning_bolts/pl_bolts/models/self_supervised/swav/swav_module_lidc.py \
