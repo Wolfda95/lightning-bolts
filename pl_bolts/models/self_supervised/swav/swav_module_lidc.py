@@ -456,8 +456,8 @@ class SwAV(LightningModule):
 
         # Save Path
         parser.add_argument("--save_path", default="/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/PreTrain_Gesamt/Results", type=str, help="Path to save the Checkpoints")
-        parser.add_argument("--model",default="Test", type=str, help="Model: A, B, C, ...")
-        parser.add_argument("--test", default="xy", type=str, help="Test: 0, 1, 2 ...")
+        parser.add_argument("--model",default="LIDC_MSD_lr-4_60Pozent", type=str, help="Model: A, B, C, ...")
+        parser.add_argument("--test", default="LIDC_MSD_lr-4_60Pozent", type=str, help="Test: 0, 1, 2 ...")
 
         # PreTrained Weights: +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         parser.add_argument("--load_pretrained_weights",default=False, type=bool, help="Should Resume from Pretrained Weights?")
@@ -519,7 +519,7 @@ class SwAV(LightningModule):
         parser.add_argument("--batch_size", default=128, type=int, help="batch size per gpu")
 
         parser.add_argument("--weight_decay", default=1e-6, type=float, help="weight decay")
-        parser.add_argument("--learning_rate", default=1e-3, type=float, help="base learning rate")
+        parser.add_argument("--learning_rate", default=1e-4, type=float, help="base learning rate")
         parser.add_argument("--start_lr", default=0, type=float, help="initial warmup learning rate")
         parser.add_argument("--final_lr", type=float, default=1e-6, help="final learning rate")
 
@@ -597,6 +597,7 @@ def cli_main():
 
     # inizialize the model
     trainer = Trainer(
+        limit_train_batches=0.6,
         logger=wandb_logger, # weights and bias logging
         max_epochs=args.max_epochs,
         max_steps=None if args.max_steps == -1 else args.max_steps,
