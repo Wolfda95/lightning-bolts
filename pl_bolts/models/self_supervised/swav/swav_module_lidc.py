@@ -577,7 +577,7 @@ def cli_main():
     checkpoint_dir = os.path.join(args.save_path, "save", "model_" + args.model, "versuch_" + args.test + "/")
 
     # weights and biases
-    wandb_logger = WandbLogger(name=args.model, project="SwAV_PreTrain_2D", save_dir=args.save_path)
+    wandb_logger = WandbLogger(name=args.model, project="SwAV_PreTrain_2D", save_dir=args.save_path, offline=args.offline)
 
     # swav model init
     model = SwAV(**args.__dict__) # übergibt alle args vom Parser als dict
