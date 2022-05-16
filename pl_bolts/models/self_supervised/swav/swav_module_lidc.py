@@ -460,7 +460,7 @@ class SwAV(LightningModule):
         parser.add_argument("--test", default="LIDC_MSD_lr-4_60Pozent", type=str, help="Test: 0, 1, 2 ...")
 
         # PreTrained Weights: +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        parser.add_argument("--load_pretrained_weights",default=False, type=bool, help="Should Resume from Pretrained Weights?")
+        parser.add_argument("--load_pretrained_weights", action="store_true", help="Should Resume from Pretrained Weights?") # Statt Bool: action setzt das default value auf False und es wird True sobald man --load_pretrained_weights benutzt.
         parser.add_argument("--pretrained_weights",default="/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/ImageNet/swav_800ep_pretrain.pth.tar", type=str, help="path to pretrained weights")
 
         # Data Path:
@@ -555,6 +555,10 @@ class SwAV(LightningModule):
             help="freeze the prototypes during this many epochs from the start",
         )
 
+        # trainer arguments
+        parser.add_argument("--limit_train_batches", default=None, type=float, help="Limit train set size to given percentage")
+        parser.add_argument("--offline", action="store_true", help="Offline does not save metrics on wandb")
+
         return parser
 
 
@@ -597,7 +601,6 @@ def cli_main():
 
     # inizialize the model
     trainer = Trainer(
-        limit_train_batches=0.6,
         logger=wandb_logger, # weights and bias logging
         max_epochs=args.max_epochs,
         max_steps=None if args.max_steps == -1 else args.max_steps,
@@ -608,6 +611,7 @@ def cli_main():
         precision=32 if args.fp32 else 16,
         callbacks=callbacks,
         fast_dev_run=args.fast_dev_run,
+        limit_train_batches=args.limit_train_batches,
     )
 
     # Train
