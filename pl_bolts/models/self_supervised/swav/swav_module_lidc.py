@@ -466,7 +466,7 @@ class SwAV(LightningModule):
         # Data Path:
         # "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/LIDC/manifest-1600709154662/LIDC-2D-jpeg-images"
         # "/home/wolfda/Clinic_Data/Challenge/Cifar"
-        parser.add_argument("--data_dir", default="/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/PreTrain_Gesamt/Data", type=str, help="path to download data")
+        parser.add_argument("--data_dir", default="/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/PreTrain_Gesamt/Data/LIDC-MSD-CQ500", type=str, help="path to download data")
 
 
         # model params
