@@ -32,7 +32,7 @@ def interval_mapping(image, from_min, from_max, to_min, to_max):
     # image: input array
     from_range = from_max - from_min
     to_range = to_max - to_min
-    scaled = np.array((image - from_min) / float(from_range), dtype=float)
+    scaled = np.array((image - from_min) / (float(from_range)+0.00001), dtype=float)
     return to_min + (scaled * to_range)
 
 # =============================================================================
@@ -68,6 +68,8 @@ def save(image, save_path1, save_path2, patient_name,n, wl, ww):
         path = save_path2 + "/" + str(patient_name) + "_" + str(n) + "_" + str(i) + ".jpeg"
         cv2.imwrite(path, img)
 
+    print (i)
+
 
 
 # =============================================================================
@@ -79,7 +81,7 @@ def main():
 
 
     # ToDo: Pfade wo die Daten gespeichert sind:
-    data_path = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/PET_CT_Tuebingen/nifti/FDG-PET-CT-Lesions"
+    data_path = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/PET_CT_Tuebingen/nifti(alle)/FDG-PET-CT-Lesions"
 
     # ToDo: Pfad wo die PyThorch Files gespeichert werden sollen
     save_path1 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/PET_CT_Tuebingen/AutoPET_jpeg"
@@ -99,6 +101,7 @@ def main():
 
     # ToDo: Je nach Ordnerstruktur anpassen:
     n=0
+    Anzahl = 0
     Ordner = sorted(glob.glob(data_path + "/*"))  # Liste: Alle Pfade aus dem Ordner FDG-PET-CT-Lesions (Alle Patienten)
     for fileA in Ordner:  # durchläuft alle Pfade im Ordner FDG-PET-CT-Lesions (Alle Patienten)
         Patient_Name = fileA.split("/")[-1]  # Name des Patienten
@@ -116,7 +119,8 @@ def main():
                 if file_name == "CT.nii.gz":
                     print(file_name)
                     save(fileC, save_path1, save_path2, Patient_Name,n, wl, ww)
-
+                    Anzahl += 1
+                    print("Anzahl: ", Anzahl)
 
 
 
