@@ -557,7 +557,14 @@ class SwAV(LightningModule):
 
         # trainer arguments
         parser.add_argument("--limit_train_batches", default=None, type=float, help="Limit train set size to given percentage")
+
+        # wandb arguemnts
         parser.add_argument("--offline", action="store_true", help="Offline does not save metrics on wandb")
+        parser.add_argument("--project", default="SwAV_PreTrain_2D", type=str, help="Wandb Project Name")
+        parser.add_argument("--group", default="All_Data", type=str, help="Wandb group name")
+        #parser.add_argument("--job_type", default="pretrain_swav", type=str, help="Wandb job type")
+        parser.add_argument("--tags", nargs="*", default=["LIDC-MSD-CQ500_AutoPET"], type=str, help="Wandb tags, zB Datsets")
+
 
         return parser
 
@@ -577,7 +584,14 @@ def cli_main():
     checkpoint_dir = os.path.join(args.save_path, "save", "model_" + args.model, "versuch_" + args.test + "/")
 
     # weights and biases
-    wandb_logger = WandbLogger(name=args.model, project="SwAV_PreTrain_2D", save_dir=args.save_path, offline=args.offline)
+    wandb_logger = WandbLogger(
+        name=args.model,
+        project=args.project,
+        group=args.group,
+        #job_type=args.job_type,
+        tags=args.tags,
+        save_dir=args.save_path,
+        offline=args.offline)
 
     # swav model init
     model = SwAV(**args.__dict__) # übergibt alle args vom Parser als dict

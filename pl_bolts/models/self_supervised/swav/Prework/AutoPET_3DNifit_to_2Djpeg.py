@@ -72,7 +72,7 @@ def save(image, save_path1, save_path2, patient_name,n, wl, ww):
 
 
 
-# =============================================================================
+# ============================================================would =================
 # Main
 # =============================================================================
 def main():
@@ -84,7 +84,7 @@ def main():
     data_path = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/PET_CT_Tuebingen/nifti(alle)/FDG-PET-CT-Lesions"
 
     # ToDo: Pfad wo die PyThorch Files gespeichert werden sollen
-    save_path1 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/PET_CT_Tuebingen/AutoPET_jpeg"
+    save_path1 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/PET_CT_Tuebingen/AutoPET_2D"
     save_path2 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/PreTrain_Gesamt/Data/LIDC-MSD-CQ500-AutoPET/LIDC-MSD-CQ500-AutoPET_Data"
 
 
