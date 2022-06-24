@@ -81,11 +81,11 @@ def main():
     path_table = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Downstream/Data/Val/ribfrac-val-info.csv"
 
     # Todo: Pfade zum Speichern wählen: (voher erstellen)
-    save_path_1 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Downstream/2D/Cut_DiffChen/Val/lable_1"
-    save_path_2 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Downstream/2D/Cut_DiffChen/Val/lable_2"
-    save_path_3 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Downstream/2D/Cut_DiffChen/Val/lable_3"
-    save_path_4 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Downstream/2D/Cut_DiffChen/Val/lable_4"
-    save_path_minus1 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Downstream/2D/Cut_DiffChen/Val/lable_-1"
+    save_path_1 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Downstream/2D/Cut_DiffChen/lable_1"
+    save_path_2 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Downstream/2D/Cut_DiffChen/lable_2"
+    save_path_3 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Downstream/2D/Cut_DiffChen/lable_3"
+    save_path_4 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Downstream/2D/Cut_DiffChen/lable_4"
+    save_path_minus1 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Downstream/2D/Cut_DiffChen/lable_-1"
 
     # Todo: wählen für 3 Channel:
     # True: [DiffChen] Nimmt das mittlere Bild des Bruches + das davor und das dahinter
