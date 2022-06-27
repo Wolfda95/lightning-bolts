@@ -35,10 +35,10 @@ def main():
     path_seg_gesamt = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Challenge_COVID-19-20_v2/Data/Seg"
 
     # Todo: Pfade zum Speichern wählen: (voher erstellen)
-    All_save_path_0 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Challenge_COVID-19-20_v2/Data/2D/All/0_noCovid"
-    All_save_path_1 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Challenge_COVID-19-20_v2/Data/2D/All/1_Covid"
-    Cut_save_path_0 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Challenge_COVID-19-20_v2/Data/2D/Cut/0_noCovid"
-    Cut_save_path_1 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Challenge_COVID-19-20_v2/Data/2D/Cut/1_Covid"
+    All_save_path_0 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Challenge_COVID-19-20_v2/Data/2D/All_AlleSeg/0_noCovid"
+    All_save_path_1 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Challenge_COVID-19-20_v2/Data/2D/All_AlleSeg/1_Covid"
+    Cut_save_path_0 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Challenge_COVID-19-20_v2/Data/2D/Cut_AlleSeg/0_noCovid"
+    Cut_save_path_1 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Challenge_COVID-19-20_v2/Data/2D/Cut_AlleSeg/1_Covid"
 
     file_img = sorted(glob.glob(path_img_gesamt + "/*"))
 
@@ -88,7 +88,7 @@ def main():
             if 1 in classes:
 
                 # Nur wenn es eine großflächige Segmentierung ist (mehr als 4000 Pixel Segmentiert)
-                if counts[1] > 4000:
+                if counts[1] > 1:
 
                     ############### All ########################################
                     # 3 mal die Mittlere Schicht nehmen
@@ -116,7 +116,7 @@ def main():
                     classes, counts = np.unique(seg_2d_cut, return_counts=True)
                     if 1 in classes:
                         # Nur wenn es eine großflächige Segmentierung ist (mehr als 4000 Pixel Segmentiert)
-                        if counts[1] > 4000:
+                        if counts[1] > 1:
 
                             # 3 mal die Mittlere Schicht nehmen
                             image = np.empty([3, 320, 230])

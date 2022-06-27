@@ -35,8 +35,8 @@ def main():
     path_seg_gesamt = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Challenge_COVID-19-20_v2/Data/Seg"
 
     # Todo: Pfade zum Speichern wählen: (voher erstellen)
-    All_save_path_0 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Challenge_COVID-19-20_v2/Data/2D/Half_KleinereSeg/0_noCovid"
-    All_save_path_1 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Challenge_COVID-19-20_v2/Data/2D/Half_KleinereSeg/1_Covid"
+    All_save_path_0 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Challenge_COVID-19-20_v2/Data/2D/Half_AlleSeg/0_noCovid"
+    All_save_path_1 = "/home/wolfda/Clinic_Data/Challenge/CT_PreTrain/Challenge_COVID-19-20_v2/Data/2D/Half_AlleSeg/1_Covid"
 
     file_img = sorted(glob.glob(path_img_gesamt + "/*"))
 
@@ -97,7 +97,7 @@ def main():
                 # Hat Infiltrate in Häfte 1:
                 if 1 in classes_half_1:
                     # Nur wenn es eine großflächige Segmentierung ist (mehr als 4000 Pixel Segmentiert)
-                    if counts_half_1[1]  > 100:
+                    if counts_half_1[1]  > 1:
 
                         # 3 mal die Mittlere Schicht nehmen
                         image = np.empty([3, 256, 512])
@@ -144,7 +144,7 @@ def main():
                 # Hat Infiltrate in Häfte 1:
                 if 1 in classes_half_2:
                     # Nur wenn es eine großflächige Segmentierung ist (mehr als 4000 Pixel Segmentiert)
-                    if counts_half_2[1] > 100:
+                    if counts_half_2[1] > 1:
                         # 3 mal die Mittlere Schicht nehmen
                         image = np.empty([3, 256, 512])
                         image[0, ...] = img_2d_half_2
