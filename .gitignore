@@ -172,3 +172,4 @@ mlruns/
 # Downloaded Data through Scripts
 VOCdevkit/
 *.tar
+/pl_bolts/models/self_supervised/swav/attention_maps/model.layer4/attention_map_0_0_0.png
